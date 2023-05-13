@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
-
+import {Request, Response } from 'express';
 (async () => {
 
   // Init the Express application
@@ -33,26 +33,30 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   
   // Root Endpoint
   // Displays a simple message to the user
-  app.get( "/filteredimage", async ( req, res ) => {
+  app.get( "/filteredimage", async ( req : Request, res : Response) => {
     console.log(req.query);
     var filteredpath:string = "";
     var files: string[] = [];
-    let promise = filterImageFromURL(req.query.image_url);
-    promise.then(
-      (filteredpath) => {
-        files.push(filteredpath);
-        console.log(files);
-        console.log(filteredpath);
-        res.sendFile(filteredpath);
-        res.on('finish', function(){
-          deleteLocalFiles(files);
-        });
-      },
-      (error) => {
-        console.log(error);
-        res.send(error);
-      }
-    );
+    if(req.query.image_url){
+      let promise = filterImageFromURL(req.query.image_url);
+      promise.then(
+        (filteredpath) => {
+          files.push(filteredpath);
+          console.log(files);
+          console.log(filteredpath);
+          res.status(200).sendFile(filteredpath);
+          res.on('finish', function(){
+            deleteLocalFiles(files);
+          });
+        },
+        (error) => {
+          console.log(error);
+          res.status(400).send("Maybe this image url is incorrect, Please try again!");
+        }
+      );
+    }else{
+      res.status(400).send("Please input the link of the image you want to display")
+    }
   });
   
 
